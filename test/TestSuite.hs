@@ -4,6 +4,7 @@ import Test.Tasty
 
 import qualified Tests.Unit.Core as UnitCore
 import qualified Tests.Unit.FileDiscovery as UnitFileDiscovery
+import qualified Tests.Unit.FixFunctions as UnitFixFunctions
 import qualified Tests.Property.Core as PropertyCore
 
 main :: IO ()
@@ -19,6 +20,7 @@ unitTests :: TestTree
 unitTests = testGroup "Unit Tests"
   [ UnitCore.tests
   , UnitFileDiscovery.tests
+  , UnitFixFunctions.tests
   ]
 
 propertyTests :: TestTree
