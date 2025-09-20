@@ -41,6 +41,7 @@ test-suite lintomatic-tests
     other-modules:
         Tests.Unit.Core,
         Tests.Unit.FileDiscovery,
+        Tests.Unit.FixFunctions,
         Tests.Property.Core
     hs-source-dirs: test
     build-depends:
