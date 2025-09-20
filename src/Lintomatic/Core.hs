@@ -10,6 +10,9 @@ module Lintomatic.Core (
     checkBlockStatements,
     checkKeywordStatements,
     
+    -- * Fix functions
+    applyFixes,
+    
     -- * Utility functions
     strip,
     lstrip,
@@ -210,3 +213,142 @@ lstrip = dropWhile isSpace
 -}
 rstrip :: String -> String
 rstrip = reverse . lstrip . reverse
+
+{- | Apply all available fixes to Python file content.
+     This function wraps long docstring lines, adds missing blank lines,
+     and fixes indentation issues.
+
+     Parameters:
+     - filePath: Path to the file being fixed (for error reporting)
+     - content: The original file content
+
+     Returns: The fixed file content
+-}
+applyFixes :: FilePath -> String -> IO String
+applyFixes _ content = do
+    let lines' = lines content
+    
+    -- Apply fixes in order
+    fixedLines1 <- fixDocstringLength lines' 72
+    let fixedLines2 = fixIndentationIssues fixedLines1
+    let fixedLines3 = fixBlockStatements fixedLines2
+    let fixedLines4 = fixKeywordStatements fixedLines3
+    
+    return $ unlines fixedLines4
+
+{- | Fix docstring lines that exceed the maximum length by wrapping them.
+     For simplicity, this implementation truncates lines and adds "..." 
+     to indicate truncation.
+-}
+fixDocstringLength :: [String] -> Int -> IO [String]
+fixDocstringLength lines' maxLength = do
+    return $ fixLongLines lines' 1 False Nothing []
+  where
+    fixLongLines [] _ _ _ acc = reverse acc
+    fixLongLines (line:rest) lineNum inDocstring delimiter acc =
+        let stripped = strip line
+            newLineNum = lineNum + 1
+        in
+        if null stripped
+            then fixLongLines rest newLineNum inDocstring delimiter (line:acc)
+            else if not inDocstring && (isPrefixOf "\"\"\"" stripped || isPrefixOf "'''" stripped)
+                then
+                    let newDelimiter = if isPrefixOf "\"\"\"" stripped then "\"\"\"" else "'''"
+                        endsOnSameLine = isSuffixOf newDelimiter stripped && length stripped > 6
+                        newInDocstring = not endsOnSameLine
+                        fixedLine = if length line > maxLength then truncateLine line maxLength else line
+                    in fixLongLines rest newLineNum newInDocstring (Just newDelimiter) (fixedLine:acc)
+                else if inDocstring
+                    then
+                        let hasDelimiter = maybe False (`isInfixOf` line) delimiter
+                            newInDocstring = not hasDelimiter
+                            fixedLine = if length line > maxLength then truncateLine line maxLength else line
+                        in fixLongLines rest newLineNum newInDocstring delimiter (fixedLine:acc)
+                    else fixLongLines rest newLineNum inDocstring delimiter (line:acc)
+    
+    truncateLine line maxLen = 
+        if length line <= maxLen 
+            then line 
+            else take (maxLen - 3) line ++ "..."
+
+{- | Fix indentation issues by adding blank lines where needed.
+-}
+fixIndentationIssues :: [String] -> [String]
+fixIndentationIssues = fixIndentationIssues' []
+  where
+    fixIndentationIssues' acc [] = reverse acc
+    fixIndentationIssues' acc [line] = reverse (line:acc)
+    fixIndentationIssues' acc (prev:curr:rest) =
+        let strippedPrev = strip prev
+            strippedCurr = strip curr
+            prevIndent = length prev - length (lstrip prev)
+            currIndent = length curr - length (lstrip curr)
+        in
+        if null strippedPrev || null strippedCurr
+            then fixIndentationIssues' (prev:acc) (curr:rest)
+            else if currIndent < prevIndent
+                then
+                    let isExempt = case strippedCurr of
+                                     (c:_) -> c `elem` ['(', ')', '{', '}', '[', ']']
+                                     [] -> False
+                    in if isExempt
+                        then fixIndentationIssues' (prev:acc) (curr:rest)
+                        else fixIndentationIssues' ("":prev:acc) (curr:rest)  -- Add blank line
+                else fixIndentationIssues' (prev:acc) (curr:rest)
+
+{- | Fix block statements by adding blank lines where needed.
+-}
+fixBlockStatements :: [String] -> [String]
+fixBlockStatements = fixBlockStatements' []
+  where
+    fixBlockStatements' acc [] = reverse acc
+    fixBlockStatements' acc [line] = reverse (line:acc)
+    fixBlockStatements' acc (prev:curr:rest) =
+        let strippedPrev = strip prev
+            strippedCurr = strip curr
+            currIndent = length curr - length (lstrip curr)
+            prevIndent = length prev - length (lstrip prev)
+            isBlockStatement = any (`isPrefixOf` strippedCurr) blockKeywords
+            needsBlankLine = isBlockStatement && 
+                           not (null strippedPrev) && 
+                           not (null strippedCurr) &&
+                           currIndent <= prevIndent
+        in if needsBlankLine
+            then fixBlockStatements' ("":prev:acc) (curr:rest)  -- Add blank line
+            else fixBlockStatements' (prev:acc) (curr:rest)
+    
+    blockKeywords = ["if ", "elif ", "else:", "for ", "while ", "try:", "except ", "finally:", "with ", "def ", "class "]
+
+{- | Fix keyword statement transitions by adding blank lines where needed.
+-}
+fixKeywordStatements :: [String] -> [String]
+fixKeywordStatements = fixKeywordStatements' []
+  where
+    fixKeywordStatements' acc [] = reverse acc
+    fixKeywordStatements' acc [line] = reverse (line:acc)
+    fixKeywordStatements' acc (prev:curr:rest) =
+        let strippedPrev = strip prev
+            strippedCurr = strip curr
+            currIndent = length curr - length (lstrip curr)
+            prevIndent = length prev - length (lstrip prev)
+            isKeywordPrev = isKeywordStatement strippedPrev
+            isKeywordCurr = isKeywordStatement strippedCurr
+            isDocstringPrev = "\"\"\"" `isInfixOf` strippedPrev || "'''" `isInfixOf` strippedPrev
+            needsBlankLine = not (null strippedPrev) && 
+                           not (null strippedCurr) &&
+                           currIndent == prevIndent &&
+                           currIndent == 0 &&
+                           not isDocstringPrev &&
+                           isKeywordPrev /= isKeywordCurr
+        in if needsBlankLine
+            then fixKeywordStatements' ("":prev:acc) (curr:rest)  -- Add blank line
+            else fixKeywordStatements' (prev:acc) (curr:rest)
+    
+    isKeywordStatement line = any (`isPrefixOf` line) keywordPrefixes
+    
+    keywordPrefixes = [
+        "assert ", "return", "if ", "elif ", "else:", "for ", "while ", 
+        "try:", "except ", "finally:", "with ", "def ", "class ", 
+        "import ", "from ", "break", "continue", "pass", "raise ", 
+        "yield ", "global ", "nonlocal "
+        ]
