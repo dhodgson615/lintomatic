@@ -1,0 +1,21 @@
+# Haskell compilation artifacts
+*.hi
+*.o
+lintomatic
+
+# Cabal build artifacts
+dist/
+dist-newstyle/
+
+# IDE and editor files
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build directories
+.stack-work/

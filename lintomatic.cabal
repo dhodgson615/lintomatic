@@ -1,0 +1,24 @@
+cabal-version: 2.4
+name: lintomatic
+version: 1.0.0
+synopsis: A Python linter written in Haskell
+description: 
+    A specialized Python linter that focuses on docstring line length 
+    and indentation consistency. Recursively scans Python files and 
+    reports issues with clear line number references.
+
+license: MIT
+license-file: LICENSE
+author: Dylan
+maintainer: dylan@example.com
+category: Development
+build-type: Simple
+
+executable lintomatic
+    main-is: lintomatic.hs
+    build-depends: 
+        base >= 4.14 && < 5,
+        directory >= 1.3,
+        filepath >= 1.4
+    default-language: Haskell2010
+    ghc-options: -O2 -Wall
