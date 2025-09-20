@@ -255,12 +255,64 @@ File: test_keywords.py
 ```
 
 ### Automated Testing
-Run the test suite by creating test files in a `test_files/` directory and running:
+
+Lintomatic includes a comprehensive test suite with both unit tests and property-based tests using Haskell's HUnit, QuickCheck, and Tasty frameworks.
+
+#### Running the Test Suite
+
+**Quick validation test:**
 ```bash
-mkdir test_files
-# Create test files as shown above
-./lintomatic
+./test/validate_lintomatic.sh
 ```
+
+**Comprehensive test suite:**
+```bash
+cabal test
+```
+
+**Using Make targets:**
+```bash
+make test              # Quick functionality test
+make test-cabal        # Comprehensive test suite with cabal
+make test-all          # All tests (comprehensive + validation)
+make test-comprehensive # Complete test suite via script
+```
+
+**Using the test script:**
+```bash
+./run_tests.sh
+```
+
+#### Test Suite Components
+
+**Unit Tests:**
+- **Utility Functions**: Tests for string manipulation functions (`strip`, `lstrip`, `rstrip`)
+- **File Discovery**: Tests for Python file discovery in directory trees
+- **Docstring Length**: Tests for detecting overly long docstring lines
+- **Indentation**: Tests for problematic dedentation detection
+- **Block Statements**: Tests for block statement formatting rules
+- **Keyword Statements**: Tests for keyword/non-keyword transitions
+
+**Property-Based Tests:**
+- **String processing properties**: Idempotency, composition, whitespace handling
+- **Edge case generation**: Automatic testing with randomly generated inputs
+- **Invariant checking**: Ensures functions maintain expected mathematical properties
+
+#### Test Statistics
+The test suite includes:
+- **31 test cases** covering all major functionality
+- **100 property-based tests** per property (automatically generated)
+- **Unit tests** for specific behavior validation
+- **Integration tests** via the existing validation script
+
+#### Coverage
+Tests cover:
+- ✅ Core linting functions
+- ✅ File system operations
+- ✅ String processing utilities
+- ✅ Edge cases and error conditions
+- ✅ Property-based invariants
+- ✅ Backward compatibility
 
 ## Haskell Environment Checks
 

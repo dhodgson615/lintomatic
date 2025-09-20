@@ -54,15 +54,33 @@ test: $(TARGET)
 	@rm -rf test_temp
 	@echo "Test completed!"
 
+# Build and run comprehensive test suite using cabal
+test-cabal:
+	@echo "Building and running comprehensive test suite with cabal..."
+	@cabal test --test-show-details=always
+
+# Run all tests (cabal + validation)
+test-all: test-cabal
+	@echo "Running validation script for backward compatibility..."
+	@./test/validate_lintomatic.sh
+	@echo "All tests completed successfully!"
+
+# Run comprehensive test suite with convenient script
+test-comprehensive:
+	@./run_tests.sh
+
 # Show help
 help:
 	@echo "Available targets:"
-	@echo "  all         - Build lintomatic (default)"
-	@echo "  debug       - Build with debug information"
-	@echo "  clean       - Remove build artifacts"
-	@echo "  install-deps- Install system dependencies"
-	@echo "  check-env   - Verify Haskell environment"
-	@echo "  test        - Run quick functionality test"
-	@echo "  help        - Show this help message"
+	@echo "  all              - Build lintomatic (default)"
+	@echo "  debug            - Build with debug information"
+	@echo "  clean            - Remove build artifacts"
+	@echo "  install-deps     - Install system dependencies"
+	@echo "  check-env        - Verify Haskell environment"
+	@echo "  test             - Run quick functionality test"
+	@echo "  test-cabal       - Run comprehensive test suite with cabal"
+	@echo "  test-all         - Run all tests (comprehensive + validation)"
+	@echo "  test-comprehensive - Run complete test suite via script"
+	@echo "  help             - Show this help message"
 
-.PHONY: all debug clean install-deps check-env test help
+.PHONY: all debug clean install-deps check-env test test-cabal test-all test-comprehensive help

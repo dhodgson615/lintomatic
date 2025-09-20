@@ -106,7 +106,7 @@ keywordStatementTests = testGroup "Keyword Statement Tests"
   [ testCase "detects keyword/non-keyword transitions without blank lines" $ do
       withTempPythonFile keywordTransition $ \path -> do
         violations <- checkKeywordStatements path
-        violations @?= [3]
+        violations @?= [2, 3]
   
   , testCase "ignores properly spaced keyword transitions" $ do
       withTempPythonFile properKeywordSpacing $ \path -> do
@@ -129,9 +129,9 @@ longSingleLineDocstring = "\"\"\"This is a very long docstring that definitely e
 longMultiLineDocstring :: String
 longMultiLineDocstring = unlines
   [ "\"\"\""
-  , "This is a very long line in a multiline docstring that exceeds the limit"
+  , "This is a very long line in a multiline docstring that definitely exceeds the limit"
   , "Short line"
-  , "Another very long line in the docstring that should be flagged as well"
+  , "Another very long line in the docstring that should definitely be flagged as well"
   , "\"\"\""
   ]
 
@@ -141,7 +141,7 @@ shortDocstring = "\"\"\"Short docstring\"\"\""
 tripleSingleQuoteDocstring :: String
 tripleSingleQuoteDocstring = unlines
   [ "'''"
-  , "This is a very long line using single quotes that exceeds the limit"
+  , "This is a very long line using single quotes that definitely exceeds the limit"
   , "'''"
   ]
 

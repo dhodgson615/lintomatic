@@ -1,7 +1,7 @@
 module Tests.Property.Core where
 
 import Test.Tasty
-import Test.Tasty.QuickCheck
+import Test.Tasty.QuickCheck (testProperty, forAll, oneof, listOf1, elements, Property, (==>))
 import Data.Char (isSpace)
 
 import Lintomatic.Core
@@ -40,6 +40,7 @@ prop_stripRemovesWhitespace s =
   let result = strip s
   in case result of
     [] -> True
+    [x] -> not (isSpace x)
     xs -> not (isSpace (head xs)) && not (isSpace (last xs))
 
 -- Property: lstrip only removes leading whitespace, preserves trailing
@@ -77,10 +78,15 @@ prop_emptyStringHandling =
   strip "" == "" && lstrip "" == "" && rstrip "" == ""
 
 -- Property: strings with only whitespace become empty after strip
-prop_whitespaceOnlyStrings :: [Char] -> Property
-prop_whitespaceOnlyStrings whitespaceChars = 
-  all isSpace whitespaceChars ==> 
-    strip whitespaceChars == ""
+prop_whitespaceOnlyStrings :: Property
+prop_whitespaceOnlyStrings = 
+  forAll whitespaceStringGen $ \s -> 
+    all isSpace s ==> strip s == ""
+  where
+    whitespaceStringGen = oneof
+      [ return ""
+      , listOf1 (elements " \t\n\r\f\v")
+      ]
 
 -- Test various edge cases
 prop_edgeCases :: Bool

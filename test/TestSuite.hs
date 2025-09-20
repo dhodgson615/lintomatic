@@ -1,8 +1,6 @@
 module Main where
 
 import Test.Tasty
-import Test.Tasty.HUnit
-import Test.Tasty.QuickCheck
 
 import qualified Tests.Unit.Core as UnitCore
 import qualified Tests.Unit.FileDiscovery as UnitFileDiscovery
