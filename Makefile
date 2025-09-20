@@ -3,7 +3,7 @@
 # Compiler settings
 GHC = ghc
 GHCFLAGS = -O2 --make
-SOURCE = lintomatic.hs
+SOURCE = src/lintomatic.hs
 TARGET = lintomatic
 
 # Default target
@@ -19,7 +19,7 @@ debug: $(TARGET)
 
 # Clean build artifacts
 clean:
-	rm -f *.hi *.o $(TARGET)
+	rm -f *.hi *.o src/*.hi src/*.o $(TARGET)
 
 # Install system dependencies (Ubuntu/Debian)
 install-deps:
