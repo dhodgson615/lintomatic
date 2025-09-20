@@ -93,7 +93,9 @@ checkIndentation filePath = do
             then findProblematicLines (curr:rest) nextLineNum acc
             else if currIndent < prevIndent
                 then
-                    let isExempt = not (null strippedCurr) && elem (head strippedCurr) "(){}[]"
+                    let isExempt = case strippedCurr of
+                                     (c:_) -> elem c "(){}[]"
+                                     [] -> False
                         newAcc = if isExempt then acc else nextLineNum : acc
                     in findProblematicLines (curr:rest) nextLineNum newAcc
                 else findProblematicLines (curr:rest) nextLineNum acc
