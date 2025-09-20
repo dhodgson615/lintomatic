@@ -37,6 +37,18 @@ tests = testGroup "File Discovery Tests"
   , testCase "handles nonexistent directory" $ do
       files <- findPythonFiles "/nonexistent/directory"
       files @?= []
+  
+  , testCase "handles deeply nested directory structure" $ do
+      withTempFileStructure deeplyNestedStructure $ \tmpDir -> do
+        files <- findPythonFiles tmpDir
+        let relativeFiles = map (makeRelativeTo tmpDir) (sort files)
+        relativeFiles @?= ["deep/very/deeply/nested/deep.py", "top.py"]
+  
+  , testCase "handles directory with special characters in filenames" $ do
+      withTempFileStructure specialCharStructure $ \tmpDir -> do
+        files <- findPythonFiles tmpDir
+        let relativeFiles = map (makeRelativeTo tmpDir) (sort files)
+        relativeFiles @?= ["normal.py", "with-dash.py", "with_underscore.py"]
   ]
 
 -- Helper types and functions for creating test file structures
@@ -67,6 +79,28 @@ mixedFilesStructure =
   , File "config.json" "{}"
   , File "readme.md" "# README"
   , File "Makefile" "all:"
+  ]
+
+deeplyNestedStructure :: [FileStructure]
+deeplyNestedStructure = 
+  [ File "top.py" "# Top level Python file"
+  , Dir "deep"
+    [ Dir "very"
+      [ Dir "deeply"
+        [ Dir "nested"
+          [ File "deep.py" "# Deeply nested Python file"
+          ]
+        ]
+      ]
+    ]
+  ]
+
+specialCharStructure :: [FileStructure]
+specialCharStructure = 
+  [ File "normal.py" "# Normal filename"
+  , File "with-dash.py" "# Filename with dash"
+  , File "with_underscore.py" "# Filename with underscore"
+  , File "not-python.txt" "Not a Python file"
   ]
 
 -- Create a temporary directory with the specified file structure

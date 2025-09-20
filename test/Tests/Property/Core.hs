@@ -28,6 +28,7 @@ stringPropertyTests = testGroup "String Processing Properties"
   [ testProperty "strip preserves non-whitespace content" prop_stripPreservesContent
   , testProperty "empty string handling" prop_emptyStringHandling
   , testProperty "whitespace only strings" prop_whitespaceOnlyStrings
+  , testProperty "edge cases" prop_edgeCases
   ]
 
 -- Property: strip is idempotent (applying it twice gives same result as once)
@@ -41,7 +42,7 @@ prop_stripRemovesWhitespace s =
   in case result of
     [] -> True
     [x] -> not (isSpace x)
-    xs -> not (isSpace (head xs)) && not (isSpace (last xs))
+    (x:xs) -> not (isSpace x) && not (isSpace (last xs))
 
 -- Property: lstrip only removes leading whitespace, preserves trailing
 prop_lstripOnlyLeading :: String -> Bool
