@@ -14,6 +14,7 @@ tests = testGroup "Core Function Tests"
   , indentationTests
   , blockStatementTests
   , keywordStatementTests
+  , edgeCaseTests
   ]
 
 -- | Test the utility string manipulation functions
@@ -207,4 +208,93 @@ properKeywordSpacing = unlines
   , "import sys"
   , ""
   , "x = 1"
+  ]
+
+-- | Test comprehensive edge cases
+edgeCaseTests :: TestTree
+edgeCaseTests = testGroup "Edge Case Tests"
+  [ testCase "handles empty Python file" $ do
+      withTempPythonFile "" $ \path -> do
+        docViolations <- checkDocstringLength path 72
+        indentViolations <- checkIndentation path
+        blockViolations <- checkBlockStatements path
+        keywordViolations <- checkKeywordStatements path
+        docViolations @?= []
+        indentViolations @?= []
+        blockViolations @?= []
+        keywordViolations @?= []
+  
+  , testCase "handles file with only whitespace" $ do
+      withTempPythonFile "   \n\t\n   " $ \path -> do
+        docViolations <- checkDocstringLength path 72
+        indentViolations <- checkIndentation path
+        blockViolations <- checkBlockStatements path
+        keywordViolations <- checkKeywordStatements path
+        docViolations @?= []
+        indentViolations @?= []
+        blockViolations @?= []
+        keywordViolations @?= []
+  
+  , testCase "handles extremely long docstring" $ do
+      withTempPythonFile extremeLongDocstring $ \path -> do
+        violations <- checkDocstringLength path 72
+        violations @?= [1]
+  
+  , testCase "handles complex nested indentation" $ do
+      withTempPythonFile complexNestedIndentation $ \path -> do
+        violations <- checkIndentation path
+        violations @?= [6]
+  
+  , testCase "handles mixed quote docstrings" $ do
+      withTempPythonFile mixedQuoteDocstrings $ \path -> do
+        violations <- checkDocstringLength path 72
+        violations @?= [5]
+  
+  , testCase "handles very short line length limit" $ do
+      withTempPythonFile shortDocstring $ \path -> do
+        violations <- checkDocstringLength path 10
+        violations @?= [1]
+  
+  , testCase "handles file with only comments" $ do
+      withTempPythonFile onlyComments $ \path -> do
+        docViolations <- checkDocstringLength path 72
+        indentViolations <- checkIndentation path
+        blockViolations <- checkBlockStatements path
+        keywordViolations <- checkKeywordStatements path
+        docViolations @?= []
+        indentViolations @?= []
+        blockViolations @?= []
+        keywordViolations @?= []
+  ]
+
+-- Test data for edge cases
+extremeLongDocstring :: String
+extremeLongDocstring = "\"\"\"This is an extremely long docstring that goes way beyond any reasonable character limit and should definitely be flagged\"\"\""
+
+complexNestedIndentation :: String
+complexNestedIndentation = unlines
+  [ "def function():"
+  , "    for i in range(10):"
+  , "        if i > 5:"
+  , "            print(i)"
+  , "            print('nested')"
+  , "    print('problematic dedent')"
+  , "        print('should not happen')"
+  ]
+
+mixedQuoteDocstrings :: String
+mixedQuoteDocstrings = unlines
+  [ "\"\"\""
+  , "This is a very long line that exceeds the limit and uses double quotes"
+  , "\"\"\""
+  , "'''"
+  , "This is another very long line that exceeds the limit but uses single quotes"
+  , "'''"
+  ]
+
+onlyComments :: String
+onlyComments = unlines
+  [ "# This is a comment"
+  , "# This is another comment that might be very long but should not be flagged"
+  , "# More comments here"
   ]
