@@ -14,12 +14,44 @@ maintainer: dylan@example.com
 category: Development
 build-type: Simple
 
-executable lintomatic
-    main-is: lintomatic.hs
+library
+    exposed-modules: Lintomatic.Core
     hs-source-dirs: src
     build-depends: 
         base >= 4.14 && < 5,
         directory >= 1.3,
         filepath >= 1.4
     default-language: Haskell2010
+    ghc-options: -Wall
+
+executable lintomatic
+    main-is: Main.hs
+    hs-source-dirs: app
+    build-depends: 
+        base >= 4.14 && < 5,
+        lintomatic,
+        directory >= 1.3,
+        filepath >= 1.4
+    default-language: Haskell2010
     ghc-options: -O2 -Wall
+
+test-suite lintomatic-tests
+    type: exitcode-stdio-1.0
+    main-is: TestSuite.hs
+    other-modules:
+        Tests.Unit.Core,
+        Tests.Unit.FileDiscovery,
+        Tests.Property.Core
+    hs-source-dirs: test
+    build-depends:
+        base >= 4.14 && < 5,
+        lintomatic,
+        tasty >= 1.4,
+        tasty-hunit >= 0.10,
+        tasty-quickcheck >= 0.10,
+        QuickCheck >= 2.14,
+        directory >= 1.3,
+        filepath >= 1.4,
+        temporary >= 1.3
+    default-language: Haskell2010
+    ghc-options: -Wall -threaded
