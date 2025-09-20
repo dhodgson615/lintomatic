@@ -1,0 +1,14 @@
+# Haskell build artifacts
+*.hi
+*.o
+lintomatic
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
