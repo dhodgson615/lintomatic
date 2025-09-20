@@ -86,7 +86,21 @@ def problematic_function():
     print("Another indentation issue")
 EOF
 
-# Test 5: Nested directory test
+# Test 5: Block statements missing blank lines
+cat > test_validation/block_statements.py << 'EOF'
+"""Test file for block statement blank line checking."""
+
+x = 1
+if x > 0:
+    pass
+
+def function():
+    pass
+class TestClass:
+    pass
+EOF
+
+# Test 6: Nested directory test
 cat > test_validation/subdir/nested.py << 'EOF'
 """Testing nested directory scanning."""
 
@@ -110,6 +124,7 @@ echo "✓ clean.py: Should produce NO output"
 echo "✓ long_docstrings.py: Should report lines 2, 6, 10"
 echo "✓ bad_indentation.py: Should report indentation issues on lines 9, 13"
 echo "✓ both_issues.py: Should report both docstring and indentation issues"
+echo "✓ block_statements.py: Should report block statement issues on lines 4, 9"
 echo "✓ subdir/nested.py: Should report docstring issue on line 4"
 
 echo

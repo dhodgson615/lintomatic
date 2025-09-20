@@ -6,6 +6,7 @@ A specialized Python linter written in Haskell that focuses on docstring line le
 
 - **Docstring Length Checking**: Identifies lines within Python docstrings that exceed 72 characters
 - **Indentation Analysis**: Detects problematic indentation patterns where code dedentation occurs without proper separation
+- **Block Statement Blank Lines**: Ensures Python block statements (if, elif, else, for, while, try, except, finally, with, def, class) have blank lines before them for better readability
 - **Recursive Directory Scanning**: Automatically finds and processes all `.py` files in a directory tree
 - **Clear Output**: Provides precise line numbers and categorized issue reporting
 
@@ -103,7 +104,7 @@ Run lintomatic from any directory containing Python files:
 
 The linter will:
 1. Recursively find all `.py` files in the current directory
-2. Check each file for docstring line length and indentation issues
+2. Check each file for docstring line length, indentation issues, and block statement formatting
 3. Report findings with specific line numbers
 
 ### Example Output
@@ -114,6 +115,14 @@ File: src/example.py
             Line 23
         Lines with problematic indentation:
             Line 45
+        Block statements missing blank lines above:
+            Line 12
+            Line 34
+        Lines with problematic indentation:
+            Line 45
+        Block statements missing blank lines above:
+            Line 12
+            Line 34
 
 File: tests/test_module.py
         Docstring lines exceeding 72 characters:
@@ -178,7 +187,28 @@ File: test_indentation.py
             Line 4
 ```
 
-#### Test 3: Mixed Issues
+#### Test 3: Block Statement Issues
+Create `test_blocks.py`:
+```python
+x = 1
+if x > 0:  # Missing blank line before if
+    pass
+
+def function():
+    pass
+class TestClass:  # Missing blank line before class
+    pass
+```
+
+**Expected Output:**
+```
+File: test_blocks.py
+        Block statements missing blank lines above:
+            Line 2
+            Line 6
+```
+
+#### Test 4: Mixed Issues
 Create `test_mixed.py`:
 ```python
 """
@@ -201,6 +231,8 @@ File: test_mixed.py
             Line 6
         Lines with problematic indentation:
             Line 10
+        Block statements missing blank lines above:
+            Line 8
 ```
 
 ### Automated Testing
