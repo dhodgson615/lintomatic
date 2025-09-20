@@ -134,6 +134,53 @@ checkIndentation filePath = do
                     in findProblematicLines (curr:rest) nextLineNum newAcc
                 else findProblematicLines (curr:rest) nextLineNum acc
 
+{- | Find keyword statements that lack blank lines from non-keyword statements.
+     Identifies cases where keyword statements follow non-keyword statements
+     (or vice versa) without proper blank line separation for readability.
+
+     Parameters:
+     - filePath: Path to the Python file to check
+
+     Returns: A list of line numbers where keyword statements need blank lines
+-}
+checkKeywordStatements :: FilePath -> IO [Int]
+checkKeywordStatements filePath = do
+    content <- readFile filePath
+    let lines' = lines content
+    return $ findKeywordViolations lines' 1 []
+  where
+    findKeywordViolations [] _ acc = reverse acc
+    findKeywordViolations [_] _ acc = reverse acc
+    findKeywordViolations (prev:curr:rest) lineNum acc =
+        let strippedPrev = strip prev
+            strippedCurr = strip curr
+            currIndent = length curr - length (lstrip curr)
+            prevIndent = length prev - length (lstrip prev)
+            nextLineNum = lineNum + 1
+            isKeywordPrev = isKeywordStatement strippedPrev
+            isKeywordCurr = isKeywordStatement strippedCurr
+            -- Only flag if both lines have content, are at same indent level,
+            -- and transition between keyword and non-keyword statements
+            -- But exclude some common cases like docstrings and function bodies
+            isDocstringPrev = "\"\"\"" `isInfixOf` strippedPrev || "'''" `isInfixOf` strippedPrev
+            needsBlankLine = not (null strippedPrev) && 
+                           not (null strippedCurr) &&
+                           currIndent == prevIndent &&
+                           currIndent == 0 &&  -- Only flag at module level
+                           not isDocstringPrev &&  -- Don't flag after docstrings
+                           isKeywordPrev /= isKeywordCurr
+            newAcc = if needsBlankLine then nextLineNum : acc else acc
+        in findKeywordViolations (curr:rest) nextLineNum newAcc
+    
+    isKeywordStatement line = any (`isPrefixOf` line) keywordPrefixes
+    
+    keywordPrefixes = [
+        "assert ", "return", "if ", "elif ", "else:", "for ", "while ", 
+        "try:", "except ", "finally:", "with ", "def ", "class ", 
+        "import ", "from ", "break", "continue", "pass", "raise ", 
+        "yield ", "global ", "nonlocal "
+        ]
+
 {- | Main function that orchestrates the linting process.
      Locates Python files, checks them for docstring length and indentation issues,
      and outputs the results.
@@ -153,8 +200,9 @@ main = do
         longDocstrings <- checkDocstringLength filePath 72
         problematicIndents <- checkIndentation filePath
         blockStatementIssues <- checkBlockStatements filePath
+        keywordStatementIssues <- checkKeywordStatements filePath
 
-        when (not (null longDocstrings) || not (null problematicIndents) || not (null blockStatementIssues)) $ do
+        when (not (null longDocstrings) || not (null problematicIndents) || not (null blockStatementIssues) || not (null keywordStatementIssues)) $ do
             putStrLn $ "\nFile: " ++ relativePath
 
             when (not $ null longDocstrings) $ do
@@ -170,6 +218,11 @@ main = do
             when (not $ null blockStatementIssues) $ do
                 putStrLn "        Block statements missing blank lines above:"
                 forM_ (sort blockStatementIssues) $ \lineNum ->
+                    putStrLn $ "            Line " ++ show lineNum
+
+            when (not $ null keywordStatementIssues) $ do
+                putStrLn "        Keyword statements missing blank lines from non-keyword statements:"
+                forM_ (sort keywordStatementIssues) $ \lineNum ->
                     putStrLn $ "            Line " ++ show lineNum
 
 {- | Remove whitespace from both ends of a string.
