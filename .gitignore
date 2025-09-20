@@ -3,6 +3,17 @@
 *.o
 lintomatic
 
+
+# Test files (for development only)
+test_file.py
+comprehensive_test.py
+clean_test.py
+subdir/
+
+# Temporary files
+*.tmp
+*~
+
 # Cabal build artifacts
 dist/
 dist-newstyle/
