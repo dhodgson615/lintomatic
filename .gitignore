@@ -1,0 +1,21 @@
+# Haskell build artifacts
+*.hi
+*.o
+lintomatic
+
+# Test files (for development only)
+test_file.py
+comprehensive_test.py
+clean_test.py
+subdir/
+
+# Cabal build directory
+dist/
+dist-newstyle/
+
+# Stack build directory
+.stack-work/
+
+# Temporary files
+*.tmp
+*~
