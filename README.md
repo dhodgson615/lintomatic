@@ -63,7 +63,7 @@ cabal --version    # Should show cabal-install version
 
 2. Compile the program:
    ```bash
-   ghc --make lintomatic.hs -o lintomatic
+   ghc --make src/lintomatic.hs -o lintomatic
    ```
 
 3. Run the linter:
@@ -89,7 +89,7 @@ make clean         # Clean build artifacts
 
 #### Manual Compilation with Optimizations
 ```bash
-ghc -O2 --make lintomatic.hs -o lintomatic
+ghc -O2 --make src/lintomatic.hs -o lintomatic
 ```
 
 ## Usage
@@ -250,7 +250,7 @@ chmod +x lintomatic
 ```bash
 export PATH="$HOME/.ghcup/bin:$PATH"
 # or
-/usr/local/bin/ghc --make lintomatic.hs -o lintomatic
+/usr/local/bin/ghc --make src/lintomatic.hs -o lintomatic
 ```
 
 ## Use Cases
@@ -279,7 +279,7 @@ Add to your GitHub Actions workflow:
     ghc-version: '9.2'
 
 - name: Build lintomatic
-  run: ghc --make lintomatic.hs -o lintomatic
+  run: ghc --make src/lintomatic.hs -o lintomatic
 
 - name: Run Python linting
   run: ./lintomatic

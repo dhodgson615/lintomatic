@@ -96,7 +96,7 @@ def nested_function():
 EOF
 
 echo "Building lintomatic..."
-if ! ghc --make lintomatic.hs -o lintomatic; then
+if ! ghc --make src/lintomatic.hs -o lintomatic; then
     echo "ERROR: Failed to build lintomatic"
     exit 1
 fi
