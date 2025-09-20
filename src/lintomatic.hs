@@ -66,6 +66,40 @@ checkDocstringLength filePath maxLength = do
                         in findLongLines rest newLineNum newInDocstring delimiter newAcc
                     else findLongLines rest newLineNum inDocstring delimiter acc
 
+{- | Find block statements that lack blank lines before them.
+     Identifies Python block statements (if, for, while, etc.) that should have
+     blank lines before them for better readability.
+
+     Parameters:
+     - filePath: Path to the Python file to check
+
+     Returns: A list of line numbers where block statements need blank lines before them
+-}
+checkBlockStatements :: FilePath -> IO [Int]
+checkBlockStatements filePath = do
+    content <- readFile filePath
+    let lines' = lines content
+    return $ findBlockViolations lines' 1 []
+  where
+    findBlockViolations [] _ acc = reverse acc
+    findBlockViolations [_] _ acc = reverse acc
+    findBlockViolations (prev:curr:rest) lineNum acc =
+        let strippedPrev = strip prev
+            strippedCurr = strip curr
+            currIndent = length curr - length (lstrip curr)
+            prevIndent = length prev - length (lstrip prev)
+            nextLineNum = lineNum + 1
+            isBlockStatement = any (`isPrefixOf` strippedCurr) blockKeywords
+            -- Only flag if it's a block statement, has content before it, and isn't directly nested
+            needsBlankLine = isBlockStatement && 
+                           not (null strippedPrev) && 
+                           not (null strippedCurr) &&
+                           currIndent <= prevIndent  -- Only flag if not indented deeper
+            newAcc = if needsBlankLine then nextLineNum : acc else acc
+        in findBlockViolations (curr:rest) nextLineNum newAcc
+    
+    blockKeywords = ["if ", "elif ", "else:", "for ", "while ", "try:", "except ", "finally:", "with ", "def ", "class "]
+
 {- | Find lines where indentation decreases without a blank line above.
      Identifies style issues where code dedentation occurs without proper separation.
 
@@ -118,8 +152,9 @@ main = do
         let relativePath = makeRelative rootDir filePath
         longDocstrings <- checkDocstringLength filePath 72
         problematicIndents <- checkIndentation filePath
+        blockStatementIssues <- checkBlockStatements filePath
 
-        when (not (null longDocstrings) || not (null problematicIndents)) $ do
+        when (not (null longDocstrings) || not (null problematicIndents) || not (null blockStatementIssues)) $ do
             putStrLn $ "\nFile: " ++ relativePath
 
             when (not $ null longDocstrings) $ do
@@ -130,6 +165,11 @@ main = do
             when (not $ null problematicIndents) $ do
                 putStrLn "        Lines with problematic indentation:"
                 forM_ (sort problematicIndents) $ \lineNum ->
+                    putStrLn $ "            Line " ++ show lineNum
+
+            when (not $ null blockStatementIssues) $ do
+                putStrLn "        Block statements missing blank lines above:"
+                forM_ (sort blockStatementIssues) $ \lineNum ->
                     putStrLn $ "            Line " ++ show lineNum
 
 {- | Remove whitespace from both ends of a string.
