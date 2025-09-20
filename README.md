@@ -7,6 +7,7 @@ A specialized Python linter written in Haskell that focuses on docstring line le
 - **Docstring Length Checking**: Identifies lines within Python docstrings that exceed 72 characters
 - **Indentation Analysis**: Detects problematic indentation patterns where code dedentation occurs without proper separation
 - **Block Statement Blank Lines**: Ensures Python block statements (if, elif, else, for, while, try, except, finally, with, def, class) have blank lines before them for better readability
+- **Keyword Statement Separation**: Ensures keyword statements (assert, return, if, etc.) have blank lines separating them from non-keyword statements (assignments, expressions) at module level
 - **Recursive Directory Scanning**: Automatically finds and processes all `.py` files in a directory tree
 - **Clear Output**: Provides precise line numbers and categorized issue reporting
 
@@ -118,11 +119,9 @@ File: src/example.py
         Block statements missing blank lines above:
             Line 12
             Line 34
-        Lines with problematic indentation:
-            Line 45
-        Block statements missing blank lines above:
-            Line 12
-            Line 34
+        Keyword statements missing blank lines from non-keyword statements:
+            Line 18
+            Line 28
 
 File: tests/test_module.py
         Docstring lines exceeding 72 characters:
@@ -233,6 +232,26 @@ File: test_mixed.py
             Line 10
         Block statements missing blank lines above:
             Line 8
+```
+
+#### Test 5: Keyword Statement Separation
+Create `test_keywords.py`:
+```python
+a = 10
+b = 9
+c = 8
+assert b == 9  # Missing blank line before assert
+x = 1
+if x > 0:  # Missing blank line before if
+    pass
+```
+
+**Expected Output:**
+```
+File: test_keywords.py
+        Keyword statements missing blank lines from non-keyword statements:
+            Line 4
+            Line 6
 ```
 
 ### Automated Testing
