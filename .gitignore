@@ -1,7 +1,8 @@
-# Haskell build artifacts
+# Haskell compilation artifacts
 *.hi
 *.o
 lintomatic
+
 
 # Test files (for development only)
 test_file.py
@@ -9,13 +10,23 @@ comprehensive_test.py
 clean_test.py
 subdir/
 
-# Cabal build directory
-dist/
-dist-newstyle/
-
-# Stack build directory
-.stack-work/
-
 # Temporary files
 *.tmp
 *~
+
+# Cabal build artifacts
+dist/
+dist-newstyle/
+
+# IDE and editor files
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build directories
+.stack-work/
