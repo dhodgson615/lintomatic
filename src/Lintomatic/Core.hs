@@ -272,38 +272,40 @@ fixDocstringLength lines' maxLength = do
             else take (maxLen - 3) line ++ "..."
 
 {- | Fix indentation issues by adding blank lines where needed.
+     This matches the exact logic from checkIndentation.
 -}
 fixIndentationIssues :: [String] -> [String]
-fixIndentationIssues = fixIndentationIssues' []
+fixIndentationIssues lines' = fixIndentationIssues' lines' []
   where
-    fixIndentationIssues' acc [] = reverse acc
-    fixIndentationIssues' acc [line] = reverse (line:acc)
-    fixIndentationIssues' acc (prev:curr:rest) =
+    fixIndentationIssues' [] acc = reverse acc
+    fixIndentationIssues' [line] acc = reverse (line:acc)
+    fixIndentationIssues' (prev:curr:rest) acc =
         let strippedPrev = strip prev
             strippedCurr = strip curr
             prevIndent = length prev - length (lstrip prev)
             currIndent = length curr - length (lstrip curr)
         in
         if null strippedPrev || null strippedCurr
-            then fixIndentationIssues' (prev:acc) (curr:rest)
+            then fixIndentationIssues' (curr:rest) (prev:acc)
             else if currIndent < prevIndent
                 then
                     let isExempt = case strippedCurr of
                                      (c:_) -> c `elem` ['(', ')', '{', '}', '[', ']']
                                      [] -> False
                     in if isExempt
-                        then fixIndentationIssues' (prev:acc) (curr:rest)
-                        else fixIndentationIssues' ("":prev:acc) (curr:rest)  -- Add blank line
-                else fixIndentationIssues' (prev:acc) (curr:rest)
+                        then fixIndentationIssues' (curr:rest) (prev:acc)
+                        else fixIndentationIssues' (curr:rest) ("":prev:acc)  -- Insert blank line before curr
+                else fixIndentationIssues' (curr:rest) (prev:acc)
 
 {- | Fix block statements by adding blank lines where needed.
+     This matches the exact logic from checkBlockStatements.
 -}
 fixBlockStatements :: [String] -> [String]
-fixBlockStatements = fixBlockStatements' []
+fixBlockStatements lines' = fixBlockStatements' lines' []
   where
-    fixBlockStatements' acc [] = reverse acc
-    fixBlockStatements' acc [line] = reverse (line:acc)
-    fixBlockStatements' acc (prev:curr:rest) =
+    fixBlockStatements' [] acc = reverse acc
+    fixBlockStatements' [line] acc = reverse (line:acc)
+    fixBlockStatements' (prev:curr:rest) acc =
         let strippedPrev = strip prev
             strippedCurr = strip curr
             currIndent = length curr - length (lstrip curr)
@@ -314,19 +316,20 @@ fixBlockStatements = fixBlockStatements' []
                            not (null strippedCurr) &&
                            currIndent <= prevIndent
         in if needsBlankLine
-            then fixBlockStatements' ("":prev:acc) (curr:rest)  -- Add blank line
-            else fixBlockStatements' (prev:acc) (curr:rest)
+            then fixBlockStatements' (curr:rest) ("":prev:acc)  -- Insert blank line before curr
+            else fixBlockStatements' (curr:rest) (prev:acc)
     
     blockKeywords = ["if ", "elif ", "else:", "for ", "while ", "try:", "except ", "finally:", "with ", "def ", "class "]
 
 {- | Fix keyword statement transitions by adding blank lines where needed.
+     This matches the exact logic from checkKeywordStatements.
 -}
 fixKeywordStatements :: [String] -> [String]
-fixKeywordStatements = fixKeywordStatements' []
+fixKeywordStatements lines' = fixKeywordStatements' lines' []
   where
-    fixKeywordStatements' acc [] = reverse acc
-    fixKeywordStatements' acc [line] = reverse (line:acc)
-    fixKeywordStatements' acc (prev:curr:rest) =
+    fixKeywordStatements' [] acc = reverse acc
+    fixKeywordStatements' [line] acc = reverse (line:acc)
+    fixKeywordStatements' (prev:curr:rest) acc =
         let strippedPrev = strip prev
             strippedCurr = strip curr
             currIndent = length curr - length (lstrip curr)
@@ -341,8 +344,8 @@ fixKeywordStatements = fixKeywordStatements' []
                            not isDocstringPrev &&
                            isKeywordPrev /= isKeywordCurr
         in if needsBlankLine
-            then fixKeywordStatements' ("":prev:acc) (curr:rest)  -- Add blank line
-            else fixKeywordStatements' (prev:acc) (curr:rest)
+            then fixKeywordStatements' (curr:rest) ("":prev:acc)  -- Insert blank line before curr
+            else fixKeywordStatements' (curr:rest) (prev:acc)
     
     isKeywordStatement line = any (`isPrefixOf` line) keywordPrefixes
     
