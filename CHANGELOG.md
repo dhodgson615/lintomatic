@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.0] - 2024-12-20
+## [1.0.0] - 9-20-2025
 
 ### Added
 - Comprehensive README.md documentation
